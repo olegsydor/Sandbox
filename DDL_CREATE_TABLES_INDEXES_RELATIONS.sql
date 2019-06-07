@@ -1,3 +1,5 @@
+USE O_SYDOR_MODULE_3
+
 /* To prevent any potential data loss issues, you should review this script in detail before running it outside the context of the database designer.*/
 BEGIN TRANSACTION
 SET QUOTED_IDENTIFIER ON

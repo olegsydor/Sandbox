@@ -1,4 +1,4 @@
-USE epam_
+USE O_SYDOR_MODULE_3
 
 INSERT INTO  [dbo].[Suppliers] (
       [supplierid], 
