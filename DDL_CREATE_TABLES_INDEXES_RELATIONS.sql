@@ -207,3 +207,12 @@ GO
 ALTER TABLE dbo.supplies SET (LOCK_ESCALATION = TABLE)
 GO
 COMMIT
+
+/* CREATE tmp_Details */
+IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'tmp_Details' AND TABLE_SCHEMA = 'dbo')
+DROP TABLE dbo.tmp_Details;
+GO
+
+SELECT TOP 0 * INTO [tmp_Details]
+FROM [dbo].[details]
+GO
