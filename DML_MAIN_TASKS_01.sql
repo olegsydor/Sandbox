@@ -32,20 +32,101 @@ SELECT DISTINCT P.[productid]
 	S.city = 'London'
 
 /* 3. Видалити всі вироби, для яких немає поставок деталей */
+/*USE [O_SYDOR_MODULE_3]
+GO
 
-/* 4. Ñòâîðèòè òàáëèöþ ç íîìåðàìè ïîñòà÷àëüíèê³â ³ ïàðàìè íîìåð³â äåòàëåé, òàêèõ, ùî êîæåí ç ïîñòà÷àëüíèê³â ïîñòàâëÿº îáèäâ³ âêàçàí³ äåòàë³ */
+INSERT INTO [dbo].[products]
+           ([productid]
+           ,[name]
+           ,[city])
+     VALUES
+           (100
+           ,'Useless detail'
+           ,'London'),
+		   (101
+           ,'Useless detail again'
+           ,'Paris')
+GO
+*/
 
-/* 5. Çá³ëüøèòè ðîçì³ð ïîñòàâêè íà 10 â³äñîòê³â äëÿ âñ³õ ïîñòàâîê òèõ ïîñòà÷àëüíèê³â, ÿê³ ïîñòàâëÿþòü ÿêó-íåáóäü ×åðâîíó äåòàëü */
+DELETE FROM products
+WHERE [productid] NOT IN (
+	SELECT DISTINCT productid FROM [dbo].[supplies]
+)
 
-/* 6. Ñòâîðèòè òàáëèöþ  ç êîìá³íàö³ÿìè «êîë³ð äåòàë³ -- ì³ñòî äå çáåð³ãàºòüñÿ äåòàëü» ç âèäàëåííÿì äóáë³êàò³â */
+/* 4. Створити таблицю з номерами постачальників і парами номерів деталей, таких, що кожен з постачальників поставляє обидві вказані деталі */
 
-/* 7. Çàíåñòè â íîâîñòâîðåíó òàáëèöþ ñïèñîê íîìåð³â äåòàëåé, ÿê³ ïîñòàâëÿþòüñÿ 
-      áóäü-ÿêèì ïîñòà÷àëüíèêîì ç Ëîíäîíà ÷è äëÿ áóäü-ÿêîãî âèðîáó ç Ëîíäîíà */
+/* 5. Збільшити розмір поставки на 10 відсотків для всіх поставок тих постачальників, які поставляють яку-небудь Червону деталь */
 
-/* 8. Âñòàâèòè â òàáëèöþ ïîñòà÷àëüíèê³â ïîñòà÷àëüíèêà ç êîäîì 10, ïð³çâèùåì Óàéò, ç ì³ñòà Íüþ-Éîðê ç íåâ³äîìèì ðåéòèíãîì  */
+UPDATE [dbo].[supplies]
+  SET [quantity] *= 1.1
+  WHERE [supplierid] IN
+  (
+  SELECT DISTINCT F.[supplierid]
+	FROM [dbo].[supplies] AS F
+	JOIN [dbo].[suppliers] AS S
+	ON S.supplierid = F.supplierid
+	JOIN [dbo].[details] AS D
+	ON D.detailid = F.detailid
+	WHERE D.color = 'Red'
+  )
+	
 
-/* 9. Âèäàëèòè âñ³ âèðîáè ç Ðèìó ³ âñ³ â³äïîâ³äí³ ïîñòàâêè */
+/* 6. Створити таблицю  з комбінаціями «колір деталі -- місто де зберігається деталь» з видаленням дублікатів */
+SELECT DISTINCT 
+       [color] AS 'detail color'
+      ,[city] AS 'detail city'
+	  INTO [dbo].[tmp_06]
+	  FROM [dbo].[details]
 
+
+/* 7. Занести в новостворену таблицю список номерів деталей, які поставляються 
+      будь-яким постачальником з Лондона чи для будь-якого виробу з Лондона */
+SELECT DISTINCT F.[detailid] AS 'detail id'
+	INTO [dbo].[tmp_07]
+	FROM [dbo].[supplies] AS F
+	JOIN [dbo].[suppliers] AS S
+	ON S.supplierid = F.supplierid
+	JOIN [dbo].[details] AS D
+	ON D.detailid = F.detailid
+	JOIN [dbo].[products] AS P
+	ON P.productid = F.productid
+	WHERE P.city = 'London'
+	OR
+	S.city = 'London'
+
+/* 8.	Вставити в таблицю постачальників постачальника з кодом 10, прізвищем Уайт, з міста Нью-Йорк з невідомим рейтингом   */
+INSERT INTO [dbo].[suppliers]
+           ([supplierid]
+           ,[name]
+           ,[city])
+     VALUES
+           (10
+           ,'White'
+           ,'New York')
+GO
+
+
+
+/* 9.	Видалити всі вироби з Риму і всі відповідні поставки */
+
+
+
+/*
+BEGIN TRANSACTION
+GO
+ALTER TABLE dbo.supplies ADD CONSTRAINT
+	FK_supplies_products FOREIGN KEY
+	(
+	productid
+	) REFERENCES dbo.products
+	(
+	productid
+	) ON UPDATE  NO ACTION 
+	 ON DELETE  CASCADE 
+	
+GO
+*/
 /* 10. Ñòâîðèòè òàáëèöþ ç âïîðÿäêîâàíèì ñïèñêîì âñ³õ ì³ñò â ÿêèõ º ïî êðàéí³é ì³ð³ îäèí ïîñòà÷àëüíèê, îäíà äåòàëü ÷è âèð³á */
 
 /* 11. Çì³íèòè êîë³ð ÷åðâîíèõ äåòàëåé ç âàãîþ ìåíøå 15 ôóíò³â íà æîâòèé. */

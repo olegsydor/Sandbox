@@ -40,7 +40,7 @@ CREATE TABLE dbo.suppliers
 	(
 	supplierid int NOT NULL,
 	name varchar(20) NOT NULL,
-	rating int NOT NULL,
+	rating int NULL,
 	city varchar(20) NOT NULL
 	)  ON [PRIMARY]
 GO
