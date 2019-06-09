@@ -1,3 +1,19 @@
+IF EXISTS 
+   (
+    SELECT name FROM master.dbo.sysdatabases 
+    WHERE name = N'O_SYDOR_MODULE_3'
+    )
+BEGIN
+    SELECT 'Database Name already Exist' AS Message
+END
+    ELSE
+BEGIN
+    CREATE DATABASE [O_SYDOR_MODULE_3]
+    SELECT 'New Database is Created'
+END
+GO
+
+
 USE O_SYDOR_MODULE_3
 
 /* To prevent any potential data loss issues, you should review this script in detail before running it outside the context of the database designer.*/
