@@ -32,8 +32,7 @@ SELECT DISTINCT P.[productid]
 	S.city = 'London'
 
 /* 3. Видалити всі вироби, для яких немає поставок деталей */
-/*USE [O_SYDOR_MODULE_3]
-GO
+-- Since we have no records with this condition I've added two 'useless' detail here
 
 INSERT INTO [dbo].[products]
            ([productid]
@@ -47,7 +46,6 @@ INSERT INTO [dbo].[products]
            ,'Useless detail again'
            ,'Paris')
 GO
-*/
 
 DELETE FROM products
 WHERE [productid] NOT IN (
@@ -55,6 +53,17 @@ WHERE [productid] NOT IN (
 )
 
 /* 4. Створити таблицю з номерами постачальників і парами номерів деталей, таких, що кожен з постачальників поставляє обидві вказані деталі */
+SELECT DISTINCT S.[supplierid] AS 'supplier'
+      ,S.[detailid] AS 'detail 1'
+      ,D.[detailid] AS 'detail 2'
+  INTO [dbo].[tmp_04] 
+  FROM [dbo].[supplies] AS S
+  JOIN
+  [dbo].[supplies] AS D
+  ON S.supplierid = D.supplierid
+  AND
+  S.detailid > D.detailid
+
 
 /* 5. Збільшити розмір поставки на 10 відсотків для всіх поставок тих постачальників, які поставляють яку-небудь Червону деталь */
 
@@ -110,31 +119,108 @@ GO
 
 /* 9.	Видалити всі вироби з Риму і всі відповідні поставки */
 
+/*This script won't be work if constraints and relations are exist
+If we have ON DELETE  CASCADE we need just a simple script like
 
+
+But it isn't as interesting as we would like so I suppose we didn't have those constraints and wrote a little bit more complicated script (see below)
+
+DECLARE @DelProduct TABLE (ProductID INT)
+DELETE [dbo].[products]
+OUTPUT DELETED.productid INTO @DelProduct
+WHERE city = 'Roma'
+DELETE [dbo].[supplies]
+WHERE [supplies].productid IN (SELECT productid FROM @DelProduct)
+GO
+
+
+*/
+
+
+DELETE [dbo].[products]
+WHERE city = 'Roma'
+
+/* 10.	Створити таблицю з впорядкованим списком всіх міст в яких є по крайній мірі один постачальник, одна деталь чи виріб */
+
+SELECT city 
+INTO [dbo].[tmp_10]
+FROM suppliers
+UNION
+SELECT city FROM products
+UNION
+SELECT city FROM details
+ORDER BY city
+
+/* 11. Змінити колір червоних деталей з вагою менше 15 фунтів на жовтий. */
+UPDATE [dbo].[details]
+	SET color = 'Yellow'
+	WHERE color = 'Red' AND weight < 15
+
+/* 12. Створити таблицю з номерами виробів і назвами міст, де вони виготовляються. Додаткова умова – друга літера назва міста повинна бути ‘о’ */
+SELECT [productid], [city] 
+INTO [dbo].[tmp_12]
+FROM products 
+WHERE [city] LIKE '_o%'
+
+/* 13.	Збільшити на 10 рейтинг тих постачальників, об’єм поставок яких вище середнього */
+UPDATE [dbo].[suppliers]
+	SET rating*=1.1
+	WHERE [suppliers].[supplierid] IN 
+	(
+		SELECT [supplierid]
+		--,SUM([quantity])/COUNT([quantity])
+		FROM [O_SYDOR_MODULE_3].[dbo].[supplies]
+		GROUP BY [supplierid]
+		HAVING SUM([quantity])/COUNT([quantity]) > 
+			(
+			SELECT SUM([quantity])/COUNT([quantity])
+			FROM [O_SYDOR_MODULE_3].[dbo].[supplies])
+	)
+
+/* 14.	Створити таблицю з впорядкованими списками номерів і прізвищами постачальників, які постачають деталі для виробу 1. */
+SELECT S.[supplierid]
+	  ,S.[name]
+INTO [dbo].[tmp_14]
+  FROM [dbo].[supplies] AS F
+  JOIN [dbo].[suppliers] AS S
+  ON S.supplierid = F.supplierid
+  WHERE F.[productid] = 1
+  ORDER BY S.name
+
+/* 15.	Вставити в таблицю двох різних постачальників одною командою */
+INSERT INTO [dbo].[suppliers]
+           ([supplierid]
+           ,[name]
+           ,[rating]
+           ,[city])
+     VALUES
+           (100500,
+           N'Перший постачальник',
+           Null,
+           'Barcelona'),
+		   (100501,
+           N'Другий  постачальник',
+           1,
+           'Ternopil')
+GO
 
 /*
-BEGIN TRANSACTION
-GO
-ALTER TABLE dbo.supplies ADD CONSTRAINT
-	FK_supplies_products FOREIGN KEY
-	(
-	productid
-	) REFERENCES dbo.products
-	(
-	productid
-	) ON UPDATE  NO ACTION 
-	 ON DELETE  CASCADE 
-	
-GO
+Merge 
+1.	Створити додаткову таблицю tmp_Details (структура вище) та наповнити її даними 
+2.	Написати  команду merge, яка змінить дані у таблиці Details відповідно до вхідних даних таблиці tmp_Details. 
 */
-/* 10. Ñòâîðèòè òàáëèöþ ç âïîðÿäêîâàíèì ñïèñêîì âñ³õ ì³ñò â ÿêèõ º ïî êðàéí³é ì³ð³ îäèí ïîñòà÷àëüíèê, îäíà äåòàëü ÷è âèð³á */
 
-/* 11. Çì³íèòè êîë³ð ÷åðâîíèõ äåòàëåé ç âàãîþ ìåíøå 15 ôóíò³â íà æîâòèé. */
 
-/* 12. Ñòâîðèòè òàáëèöþ ç íîìåðàìè âèðîá³â ³ íàçâàìè ì³ñò, äå âîíè âèãîòîâëÿþòüñÿ. Äîäàòêîâà óìîâà – äðóãà ë³òåðà íàçâà ì³ñòà ïîâèííà áóòè ‘î’ */
-
-/* 13. Çá³ëüøèòè íà 10 ðåéòèíã òèõ ïîñòà÷àëüíèê³â, îá’ºì ïîñòàâîê ÿêèõ âèùå ñåðåäíüîãî */
-
-/* 14. Ñòâîðèòè òàáëèöþ ç âïîðÿäêîâàíèìè ñïèñêàìè íîìåð³â ³ ïð³çâèùàìè ïîñòà÷àëüíèê³â, ÿê³ ïîñòà÷àþòü äåòàë³ äëÿ âèðîáó 1. */
-
-/* 15. Âñòàâèòè â òàáëèöþ äâîõ ð³çíèõ ïîñòà÷àëüíèê³â îäíîþ êîìàíäîþ */
+  MERGE INTO [dbo].[details]  AS D
+    USING [dbo].[tmp_Details] AS T
+    ON T.[detailid] = D.[detailid]
+    WHEN MATCHED THEN   
+        UPDATE 
+		SET D.[detailid] = T.[detailid],
+			D.[name]     = T.[name],
+			D.[color]    = T.[color],
+			D.[weight]   = T.[weight],
+			D.[city]     = T.[city]
+    WHEN NOT MATCHED THEN  
+        INSERT ([detailid], [name],	[color], [weight], [city]) 
+		VALUES (T.[detailid], T.[name],	T.[color], T.[weight], T.[city]);
